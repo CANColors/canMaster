@@ -127,7 +127,7 @@ void mqtt_transmit_task(void *arg)
       if (cntMsg > 0) //Если есть что послать - посылаем
       {
       ESP_LOGI(TAG, "Messages to send:%d",  cntMsg );
-       ControlEvents cs2 = EV_NET_START;    
+       ControlEvents cs2 = EV_NET_TRANSMIT_START;    
        xQueueSend(controlEvents, &cs2, portMAX_DELAY);
        
         char* data = request_server_masterrequest();
@@ -137,7 +137,7 @@ void mqtt_transmit_task(void *arg)
        
         free (data);
         
-       cs2 = EV_NET_END;    
+       cs2 =  EV_NET_TRANSMIT_END;    
        xQueueSend(controlEvents, &cs2, portMAX_DELAY);  
       }else 
           if (timeslot >= TIME_HEARTBEAT)    //  Иначе если пришло время для heartbeat - шлем его
@@ -180,7 +180,9 @@ void mqtt_receive(esp_mqtt_event_handle_t event)
             {
               request_can_send (jdata);
               cJSON_Delete (jdata);
-             // goto new_data;
+              
+             ControlEvents cs2 = EV_NET_RECEIVED;    
+              xQueueSend(controlEvents, &cs2, portMAX_DELAY);
             } 
             // cJSON_Delete (jdata);
             

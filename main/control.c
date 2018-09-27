@@ -23,13 +23,15 @@ extern SemaphoreHandle_t obd_tx_wait;
 
 static const char *CONTROL_TAG="CONTROL";
 ControlState cs = CONTROL_START;
-ControlState prevCs = CONTROL_START;
+ControlState prevState = CONTROL_START;
 QueueHandle_t controlEvents;
    
-void controlHTTPResponseWaitState(ControlEvents ev);
-void controlHTTPRequestSendState(ControlEvents ev);
+void controlNetResponseWaitState(ControlEvents ev);
+void controlNetRequestSendState(ControlEvents ev);
 void controlStartState(ControlEvents ev);
 void controlCANRequestState(ControlEvents ev);
+
+static void changeState(ControlState newState);
 
 
 void control_task(void *arg)
@@ -62,14 +64,14 @@ void control_task(void *arg)
           case CONTROL_SEND_REQUEST:
           {
               ESP_LOGI(CONTROL_TAG, "CONTROL_SEND_REQUEST" );
-              controlHTTPRequestSendState(ev);
+              controlNetRequestSendState(ev);
               break;
           }  
                    
           case CONTROL_WAIT_RESPONSE:
           {
            ESP_LOGI(CONTROL_TAG, "CONTROL_WAIT_RESPONSE" );
-              controlHTTPResponseWaitState(ev);
+              controlNetResponseWaitState(ev);
                break;
           
           }
@@ -77,9 +79,8 @@ void control_task(void *arg)
           {
            ESP_LOGI(CONTROL_TAG, "CONTROL_RESPONSE_TRANSMITTED" );
        
-           cs = CONTROL_CAN_REQUEST_WAIT;
-           prevCs = CONTROL_RESPONSE_TRANSMITTED;
-           
+           changeState (CONTROL_CAN_REQUEST_WAIT);
+                      
            ControlEvents cs2 = EV_START;    
            xQueueSend(controlEvents, &cs2, portMAX_DELAY);
        
@@ -102,16 +103,16 @@ void controlStartState(ControlEvents ev)
     {
         //Wait for data from CAN bus 
         xSemaphoreGive(can_rx);
-        cs = CONTROL_CAN_REQUEST_WAIT;
-        prevCs =  CONTROL_START;
-      break;
+        changeState(CONTROL_CAN_REQUEST_WAIT);
+         break;
     }
   
    case EV_STOP: { break; }
    case EV_CAN_RECEIVED: { break;}
-   case EV_NET_START:{break;}
-   case EV_NET_END:{break;}
-   case EV_NET_TIMEOUT: {break;}
+   case EV_NET_TRANSMIT_START:{break;}
+   case EV_NET_TRANSMIT_END:{break;}
+   case EV_NET_RECEIVED:{break;}
+   case EV_NET_TRANSMIT_TIMEOUT: {break;}
    case EV_BIG_TIMEOUT: {break;}
     default: break;
   }
@@ -127,66 +128,87 @@ void controlCANRequestState(ControlEvents ev)
    { 
       xSemaphoreGive(net_tx); //  sending the request
       xSemaphoreGive(obd_tx_wait);
-      cs = CONTROL_SEND_REQUEST;
-      prevCs =  CONTROL_CAN_REQUEST_WAIT;
+      changeState(CONTROL_SEND_REQUEST);
+     
     break;
    }
-   case EV_NET_START:{break;}
-   case EV_NET_END:{break;}
-   case EV_NET_TIMEOUT: {break;}
+   case EV_NET_TRANSMIT_START:{break;}
+   case EV_NET_TRANSMIT_END:{break;}
+   case EV_NET_TRANSMIT_TIMEOUT: {break;}
+   case EV_NET_RECEIVED:{break;}
    case EV_BIG_TIMEOUT: {break;}
    default: break;
   }
 }
 
-void controlHTTPRequestSendState(ControlEvents ev)
+void controlNetRequestSendState(ControlEvents ev)
 {
   switch (ev)
   {
    case EV_START:{break;}
    case EV_STOP: { break; }
    case EV_CAN_RECEIVED: { break;}
-   case EV_NET_START:{break;}
-   case EV_NET_END:
+   case EV_NET_TRANSMIT_START:{break;}
+   case EV_NET_TRANSMIT_END:
    {
       xSemaphoreGive(net_rx);   //Looking for the response
-      cs = CONTROL_WAIT_RESPONSE;
-      prevCs =  CONTROL_SEND_REQUEST;
+     changeState(CONTROL_WAIT_RESPONSE);
+      
     break;
    }
-   case EV_NET_TIMEOUT: {break;}
+   case EV_NET_TRANSMIT_TIMEOUT: {break;}
+   case EV_NET_RECEIVED:{break;}
    case EV_BIG_TIMEOUT:
     {
-      xSemaphoreGive(obd_tx_wait); // Wait again
+      changeState(CONTROL_START);
+       ControlEvents cs2 = EV_START;    
+       xQueueSend(controlEvents, &cs2, portMAX_DELAY);
+       
+      //xSemaphoreGive(obd_tx_wait); // Wait again
       break;
     }
    default: break;
   }
 }
 
-void controlHTTPResponseWaitState(ControlEvents ev)
+void controlNetResponseWaitState(ControlEvents ev)
 {
   switch (ev)
   {
    case EV_START:{break;}
    case EV_STOP: { break; }
    case EV_CAN_RECEIVED: { break;}
-   case EV_NET_START: { break; }
-   case EV_NET_END:{
+   case EV_NET_TRANSMIT_START: { break; }
+   case EV_NET_TRANSMIT_END: { break; }
+   case EV_NET_RECEIVED:{
      xSemaphoreGive(can_tx);
-     cs = CONTROL_RESPONSE_TRANSMITTED;
-    prevCs = CONTROL_WAIT_RESPONSE;
+    changeState(CONTROL_RESPONSE_TRANSMITTED);
+    
    break;
    }
    
-   case EV_NET_TIMEOUT:{ break; }
+   case EV_NET_TRANSMIT_TIMEOUT:{ break; }
    case EV_BIG_TIMEOUT: 
    {
-    xSemaphoreGive(obd_tx_wait); // Wait again
+       changeState(CONTROL_START);
+       ControlEvents cs2 = EV_START;    
+       xQueueSend(controlEvents, &cs2, portMAX_DELAY);
+      
+    //xSemaphoreGive(obd_tx_wait); // Wait again
     break;
   }
    default: break;
   }
+}
+
+/*****************************************************************************/
+/*         change state                                                      */
+/*****************************************************************************/
+void changeState(ControlState newState)
+{
+  prevState = cs;
+  cs = newState;
+
 }
 
 
@@ -208,3 +230,5 @@ void controlHTTPRequestSendState(ControlEvents ev)
   }
 }
  */
+ 
+ 

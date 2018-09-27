@@ -37,8 +37,8 @@ extern SemaphoreHandle_t http_rx;
 extern SemaphoreHandle_t http_tx;
 extern SemaphoreHandle_t http_tx_wait;
 
-extern QueueHandle_t rxCanQueue;
-extern QueueHandle_t txCanQueue;
+QueueHandle_t rxCanQueue;
+QueueHandle_t txCanQueue;
 extern QueueHandle_t controlEvents;
 
 void testPrintQueue(void);

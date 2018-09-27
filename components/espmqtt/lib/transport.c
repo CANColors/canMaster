@@ -1,18 +1,3 @@
-// Copyright 2015-2018 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,7 +5,8 @@
 #include "esp_log.h"
 
 #include "transport.h"
-#include "http_utils.h"
+#include "platform.h"
+
 
 static const char *TAG = "TRANSPORT";
 
@@ -53,7 +39,7 @@ STAILQ_HEAD(transport_list_t, transport_item_t);
 transport_list_handle_t transport_list_init()
 {
     transport_list_handle_t list = calloc(1, sizeof(struct transport_list_t));
-    HTTP_MEM_CHECK(TAG, list, return NULL);
+    ESP_MEM_CHECK(TAG, list, return NULL);
     STAILQ_INIT(list);
     return list;
 }
@@ -64,7 +50,7 @@ esp_err_t transport_list_add(transport_list_handle_t list, transport_handle_t t,
         return ESP_ERR_INVALID_ARG;
     }
     t->scheme = calloc(1, strlen(scheme) + 1);
-    HTTP_MEM_CHECK(TAG, t->scheme, return ESP_ERR_NO_MEM);
+    ESP_MEM_CHECK(TAG, t->scheme, return ESP_ERR_NO_MEM);
     strcpy(t->scheme, scheme);
     STAILQ_INSERT_TAIL(list, t, next);
     return ESP_OK;
@@ -113,7 +99,7 @@ esp_err_t transport_list_clean(transport_list_handle_t list)
 transport_handle_t transport_init()
 {
     transport_handle_t t = calloc(1, sizeof(struct transport_item_t));
-    HTTP_MEM_CHECK(TAG, t, return NULL);
+    ESP_MEM_CHECK(TAG, t, return NULL);
     return t;
 }
 

@@ -1,17 +1,3 @@
-// Copyright 2015-2018 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,7 +9,7 @@
 #include "esp_system.h"
 #include "esp_err.h"
 
-#include "http_utils.h"
+#include "platform.h"
 #include "transport.h"
 
 static const char *TAG = "TRANS_TCP";
@@ -74,7 +60,7 @@ static int tcp_connect(transport_handle_t t, const char *host, int port, int tim
     remote_ip.sin_family = AF_INET;
     remote_ip.sin_port = htons(port);
 
-    http_utils_ms_to_timeval(timeout_ms, &tv);
+    ms_to_timeval(timeout_ms, &tv);
 
     setsockopt(tcp->sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
@@ -119,7 +105,7 @@ static int tcp_poll_read(transport_handle_t t, int timeout_ms)
     FD_ZERO(&readset);
     FD_SET(tcp->sock, &readset);
     struct timeval timeout;
-    http_utils_ms_to_timeval(timeout_ms, &timeout);
+    ms_to_timeval(timeout_ms, &timeout);
     return select(tcp->sock + 1, &readset, NULL, NULL, &timeout);
 }
 
@@ -130,7 +116,7 @@ static int tcp_poll_write(transport_handle_t t, int timeout_ms)
     FD_ZERO(&writeset);
     FD_SET(tcp->sock, &writeset);
     struct timeval timeout;
-    http_utils_ms_to_timeval(timeout_ms, &timeout);
+    ms_to_timeval(timeout_ms, &timeout);
     return select(tcp->sock + 1, NULL, &writeset, NULL, &timeout);
 }
 
@@ -157,7 +143,7 @@ transport_handle_t transport_tcp_init()
 {
     transport_handle_t t = transport_init();
     transport_tcp_t *tcp = calloc(1, sizeof(transport_tcp_t));
-    HTTP_MEM_CHECK(TAG, tcp, return NULL);
+    ESP_MEM_CHECK(TAG, tcp, return NULL);
     tcp->sock = -1;
     transport_set_func(t, tcp_connect, tcp_read, tcp_write, tcp_close, tcp_poll_read, tcp_poll_write, tcp_destroy);
     transport_set_context_data(t, tcp);

@@ -17,9 +17,9 @@
 
 extern SemaphoreHandle_t can_rx;
 extern SemaphoreHandle_t can_tx;
-extern SemaphoreHandle_t http_rx;
-extern SemaphoreHandle_t http_tx;
-extern SemaphoreHandle_t http_tx_wait;
+extern SemaphoreHandle_t net_rx;
+extern SemaphoreHandle_t net_tx;
+extern SemaphoreHandle_t obd_tx_wait;
 
 static const char *CONTROL_TAG="CONTROL";
 ControlState cs = CONTROL_START;
@@ -109,9 +109,9 @@ void controlStartState(ControlEvents ev)
   
    case EV_STOP: { break; }
    case EV_CAN_REQUEST: { break;}
-   case EV_HTTP_START:{break;}
-   case EV_HTTP_END:{break;}
-   case EV_HTTP_TIMEOUT: {break;}
+   case EV_NET_START:{break;}
+   case EV_NET_END:{break;}
+   case EV_NET_TIMEOUT: {break;}
    case EV_BIG_TIMEOUT: {break;}
     default: break;
   }
@@ -125,15 +125,15 @@ void controlCANRequestState(ControlEvents ev)
    case EV_STOP: { break; }
    case EV_CAN_REQUEST: 
    { 
-      xSemaphoreGive(http_tx); //  sending the request
-      xSemaphoreGive(http_tx_wait);
+      xSemaphoreGive(net_tx); //  sending the request
+      xSemaphoreGive(obd_tx_wait);
       cs = CONTROL_SEND_REQUEST;
       prevCs =  CONTROL_CAN_REQUEST_WAIT;
     break;
    }
-   case EV_HTTP_START:{break;}
-   case EV_HTTP_END:{break;}
-   case EV_HTTP_TIMEOUT: {break;}
+   case EV_NET_START:{break;}
+   case EV_NET_END:{break;}
+   case EV_NET_TIMEOUT: {break;}
    case EV_BIG_TIMEOUT: {break;}
    default: break;
   }
@@ -146,18 +146,18 @@ void controlHTTPRequestSendState(ControlEvents ev)
    case EV_START:{break;}
    case EV_STOP: { break; }
    case EV_CAN_REQUEST: { break;}
-   case EV_HTTP_START:{break;}
-   case EV_HTTP_END:
+   case EV_NET_START:{break;}
+   case EV_NET_END:
    {
-      xSemaphoreGive(http_rx);   //Looking for the response
+      xSemaphoreGive(net_rx);   //Looking for the response
       cs = CONTROL_WAIT_RESPONSE;
       prevCs =  CONTROL_SEND_REQUEST;
     break;
    }
-   case EV_HTTP_TIMEOUT: {break;}
+   case EV_NET_TIMEOUT: {break;}
    case EV_BIG_TIMEOUT:
     {
-      xSemaphoreGive(http_tx_wait); // Wait again
+      xSemaphoreGive(obd_tx_wait); // Wait again
       break;
     }
    default: break;
@@ -171,18 +171,18 @@ void controlHTTPResponseWaitState(ControlEvents ev)
    case EV_START:{break;}
    case EV_STOP: { break; }
    case EV_CAN_REQUEST: { break;}
-   case EV_HTTP_START: { break; }
-   case EV_HTTP_END:{
+   case EV_NET_START: { break; }
+   case EV_NET_END:{
      xSemaphoreGive(can_tx);
      cs = CONTROL_RESPONSE_TRANSMITTED;
     prevCs = CONTROL_WAIT_RESPONSE;
    break;
    }
    
-   case EV_HTTP_TIMEOUT:{ break; }
+   case EV_NET_TIMEOUT:{ break; }
    case EV_BIG_TIMEOUT: 
    {
-    xSemaphoreGive(http_tx_wait); // Wait again
+    xSemaphoreGive(obd_tx_wait); // Wait again
     break;
   }
    default: break;
@@ -198,12 +198,12 @@ void controlHTTPRequestSendState(ControlEvents ev)
    case EV_START:{break;}
    case EV_STOP: { break; }
    case EV_CAN_REQUEST: { break;}
-   case EV_HTTP_REQUEST_START:{break;}
-   case EV_HTTP_REQUEST_END:{break;}
-   case EV_HTTP_REQUEST_TIMEOUT: {break;}
-   case EV_HTTP_RESPONSE_START:{break;}
-   case EV_HTTP_RESPONSE_END:{break;}
-   case EV_HTTP_RESPONSE_TIMEOUT: {break;}
+   case EV_NET_REQUEST_START:{break;}
+   case EV_NET_REQUEST_END:{break;}
+   case EV_NET_REQUEST_TIMEOUT: {break;}
+   case EV_NET_RESPONSE_START:{break;}
+   case EV_NET_RESPONSE_END:{break;}
+   case EV_NET_RESPONSE_TIMEOUT: {break;}
    default: break;
   }
 }

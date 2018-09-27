@@ -15,7 +15,6 @@
 #include "freertos/queue.h"
 
 #include "can.h"
-#include "http.h"
 #include "timestamp.h"
 
 extern const QueueHandle_t rxCanQueue;

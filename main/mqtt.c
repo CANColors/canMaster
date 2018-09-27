@@ -27,8 +27,8 @@
 
 
 
-extern SemaphoreHandle_t mqtt_rx;
-extern SemaphoreHandle_t mqtt_tx;
+SemaphoreHandle_t net_rx;
+SemaphoreHandle_t net_tx;
 
 extern QueueHandle_t rxCanQueue;
 extern QueueHandle_t txCanQueue;
@@ -52,7 +52,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-            msg_id = esp_mqtt_client_subscribe(client, MQTT_REQUEST_TOPIC , 2);
+            msg_id = esp_mqtt_client_subscribe(client, MQTT_RESPONSE_TOPIC , 2);
             ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
 
          /*
@@ -121,7 +121,7 @@ void mqtt_transmit_task(void *arg)
   while (1)
   {
         
-       xSemaphoreTake(mqtt_tx, portMAX_DELAY);  
+       xSemaphoreTake(net_tx, portMAX_DELAY);  
       cntMsg = uxQueueMessagesWaiting( rxCanQueue );
         
       if (cntMsg > 0) //Если есть что послать - посылаем
@@ -132,7 +132,7 @@ void mqtt_transmit_task(void *arg)
        
         char* data = request_server_masterrequest();
          ESP_LOGI(TAG, "Message length:%d",  strlen(data));
-        int msg_id = esp_mqtt_client_publish(client, MQTT_RESPONSE_TOPIC, data, strlen(data), 2, 0);
+        int msg_id = esp_mqtt_client_publish(client, MQTT_REQUEST_TOPIC, data, strlen(data), 2, 0);
         ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
        
         free (data);
@@ -163,7 +163,7 @@ void mqtt_transmit_task(void *arg)
 void mqtt_receive(esp_mqtt_event_handle_t event)
 {
     char* data; 
-    if (!strcmp(event->topic, "request") )
+  //  if (!strcmp(event->topic, "request") )
      {
         data =   event->data;
         if (data != NULL)

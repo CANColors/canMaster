@@ -79,6 +79,7 @@ void app_main()
     wifi_wait_connected();
     
     set_time();
+    MqttInitM();
     canInit();
     
    //  xTaskCreatePinnedToCore(net_receive_task,  "NET_rx", 4096, NULL, NET_RX_TASK_PRIO, NULL, tskNO_AFFINITY);

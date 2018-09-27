@@ -9,7 +9,7 @@
 
 #define MQTT_REQUEST_TOPIC      "request"
 #define MQTT_HEARTBEAT_TOPIC    "heartbeat"
-#define MQTT_RESPONSE_TOPIC     "responce"
+#define MQTT_RESPONSE_TOPIC     "response"
  // #define HTTP_RESPONSE_DATA_PAGE     "echo"
 
 
@@ -20,7 +20,7 @@
 
 /* Constants that aren't configurable in menuconfig */
 //#define MQTT_URL "mqtt://iot.eclipse.org",
-#define MQTT_URL "mqtt://192.168.137.102"
+#define MQTT_URL "mqtt://192.168.137.100"
 #define MQTT_PORT 1883
 
 

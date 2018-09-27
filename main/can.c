@@ -84,7 +84,7 @@ void can_receive_task(void *arg)
           msg_timestamped.msg.data[i] = rx_msg.data[i];
         }
               //printCanMessage(&rx_msg,iterations);
-       ControlEvents cs2 = EV_CAN_REQUEST;    
+       ControlEvents cs2 = EV_CAN_RECEIVED;    
        xQueueSend(controlEvents, &cs2, portMAX_DELAY);
        
        xQueueSend(rxCanQueue, &msg_timestamped, portMAX_DELAY);

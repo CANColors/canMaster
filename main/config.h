@@ -13,14 +13,16 @@
  // #define HTTP_RESPONSE_DATA_PAGE     "echo"
 
 
-#define NET_TRANSMIT_TIMESLOT  100
+#define NET_TRANSMIT_TIMESLOT  0
 #define TIME_HEARTBEAT        5000
 #define RESPONSE_DELAY        1
 #define BIG_RESPONSE_DELAY        4900
 
 /* Constants that aren't configurable in menuconfig */
 //#define MQTT_URL "mqtt://iot.eclipse.org",
-#define MQTT_URL "mqtt://192.168.137.100"
+//#define MQTT_URL "mqtt://192.168.137.100"
+
+#define MQTT_URL "mqtt://185.69.155.192"
 #define MQTT_PORT 1883
 
 

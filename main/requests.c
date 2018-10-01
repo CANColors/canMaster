@@ -58,21 +58,23 @@ char* request_server_masterrequest(void)
   //  ESP_LOGI("SM request", "cntMsg =>  %d", cntMsg );
     if (cntMsg > 0)
     {
-      cJSON_AddItemToObject(msgJson, "transaction", transaction);
+      cJSON_AddItemToObject(msgJson, "tr", transaction);
       cJSON_AddNumberToObject(transaction,"id",	cntTransaction);
       char buf[50];
       sprintf(buf,"%ud", get_timestamp());
-      cJSON_AddStringToObject(transaction,"starttime",		buf);
-      cJSON_AddNumberToObject(transaction,"waitresponce", 1000	);
-      cJSON_AddNumberToObject(transaction,"dataamount", cntMsg	);
+      cJSON_AddStringToObject(transaction,"st",		buf);
+      cJSON_AddNumberToObject(transaction,"wr", 1000	);
+      cJSON_AddNumberToObject(transaction,"da", cntMsg	);
   
   
       CJSON_PUBLIC(cJSON *) commands =  cJSON_CreateArray();
   
       can_msg_timestamped msg;
       
-      while (cntMsg > 0)
+      int cnt = 0;
+      while (cntMsg > 0 && cnt<6)
       {
+        cnt++;
         BaseType_t res =  xQueueReceive(rxCanQueue, &msg, 0);
   //ESP_LOGI("SM cycle", "reading:%d", res );      
         if (res == pdTRUE)
@@ -81,10 +83,10 @@ char* request_server_masterrequest(void)
           cJSON_AddNumberToObject(command, "id",msg.id);
           cJSON_AddStringToObject( command,"type","canpackage");
           sprintf(buf,"%ud", msg.timestamp);
-          cJSON_AddStringToObject( command,"timestamp",buf);
+          cJSON_AddStringToObject( command,"ts",buf);
    
-          cJSON_AddNumberToObject(command, "address",msg.msg.identifier);
-          cJSON_AddNumberToObject(command, "datalength",msg.msg.data_length_code);
+          cJSON_AddNumberToObject(command, "ad",msg.msg.identifier);
+          cJSON_AddNumberToObject(command, "dl",msg.msg.data_length_code);
          
           CJSON_PUBLIC(cJSON *) data =  cJSON_CreateArray();
           
@@ -93,12 +95,12 @@ char* request_server_masterrequest(void)
             cJSON_AddNumberToObject(data, "data",msg.msg.data[j]);
           }
 
-          cJSON_AddItemToObject(command, "can_data", data);
+          cJSON_AddItemToObject(command, "cd", data);
           
-          cJSON_AddBoolToObject(command, "waitforanswer", false);
-           cJSON_AddNumberToObject(command, "timeout", 0);
+          cJSON_AddBoolToObject(command, "wa", false);
+           cJSON_AddNumberToObject(command, "to", 0);
           
-          cJSON_AddItemToObject(commands, "command", command);
+          cJSON_AddItemToObject(commands, "cm", command);
              
              
           cntMsg = uxQueueMessagesWaiting( rxCanQueue );
@@ -111,7 +113,7 @@ char* request_server_masterrequest(void)
         }
         
       }
-      cJSON_AddItemToObject(msgJson, "commands", commands);
+      cJSON_AddItemToObject(msgJson, "cms", commands);
         
     
     }
@@ -133,7 +135,7 @@ void request_can_send (CJSON_PUBLIC(cJSON *)jdata)
     ESP_LOGI("CAN_SEND", "print:%s", json);
     free (json);
      
-  cJSON *commands = cJSON_GetObjectItem(jdata,"commands");
+  cJSON *commands = cJSON_GetObjectItem(jdata,"cms");
    ESP_LOGI("CAN_SEND", "JSON parsed"); 
    ESP_LOGI("CAN_SEND", "is=%d", cJSON_IsArray(commands));
   if (cJSON_IsArray(commands) == 1)
@@ -151,9 +153,9 @@ void request_can_send (CJSON_PUBLIC(cJSON *)jdata)
         can_msg_timestamped canM;
         canM.id =  cJSON_GetObjectItem(command,"id")->valueint;
         //canM.timestamp = //Сконвертировать строку в число
-        canM.msg.identifier =  cJSON_GetObjectItem(command,"address")->valueint;
-        canM.msg.data_length_code = cJSON_GetObjectItem(command,"datalength")->valueint;
-          cJSON *data = cJSON_GetObjectItem(command, "can_data");
+        canM.msg.identifier =  cJSON_GetObjectItem(command,"ad")->valueint;
+        canM.msg.data_length_code = cJSON_GetObjectItem(command,"dl")->valueint;
+          cJSON *data = cJSON_GetObjectItem(command, "cd");
           if (cJSON_IsArray(data) == cJSON_True)
           {
              int data_len =  cJSON_GetArraySize(data);

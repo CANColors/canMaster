@@ -60,9 +60,10 @@ char* request_server_masterrequest(void)
     {
       cJSON_AddItemToObject(msgJson, "tr", transaction);
       cJSON_AddNumberToObject(transaction,"id",	cntTransaction);
-      char buf[50];
-      sprintf(buf,"%ud", get_timestamp());
-      cJSON_AddStringToObject(transaction,"st",		buf);
+     // char buf[50];
+     // sprintf(buf,"%ud", get_timestamp());
+     // cJSON_AddStringToObject(transaction,"st",		buf);
+     cJSON_AddNumberToObject(transaction,"st", get_timestamp());
       cJSON_AddNumberToObject(transaction,"wr", 1000	);
       cJSON_AddNumberToObject(transaction,"da", cntMsg	);
   

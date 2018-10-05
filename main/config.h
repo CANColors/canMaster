@@ -7,9 +7,9 @@
 /*                                                                            */
 /* ========================================================================== */
 
-#define MQTT_REQUEST_TOPIC      "request"
+#define MQTT_REQUEST_TOPIC      "sniffer/request"
 #define MQTT_HEARTBEAT_TOPIC    "heartbeat"
-#define MQTT_RESPONSE_TOPIC     "response"
+#define MQTT_RESPONSE_TOPIC     "sniffer/response"
  // #define HTTP_RESPONSE_DATA_PAGE     "echo"
 
 

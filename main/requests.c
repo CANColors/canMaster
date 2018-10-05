@@ -82,9 +82,10 @@ char* request_server_masterrequest(void)
           CJSON_PUBLIC(cJSON *) command =  cJSON_CreateObject();
           cJSON_AddNumberToObject(command, "id",msg.id);
           cJSON_AddStringToObject( command,"type","canpackage");
-          sprintf(buf,"%ud", msg.timestamp);
-          cJSON_AddStringToObject( command,"ts",buf);
-   
+          
+          //sprintf(buf,"%ud", msg.timestamp);
+          //cJSON_AddStringToObject( command,"ts",buf);
+          cJSON_AddNumberToObject(command, "ts",msg.timestamp);
           cJSON_AddNumberToObject(command, "ad",msg.msg.identifier);
           cJSON_AddNumberToObject(command, "dl",msg.msg.data_length_code);
          

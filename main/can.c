@@ -194,7 +194,7 @@ void testPrintQueue(void)
  
     if (rx_msg->data[1]== 0x09 && rx_msg->data[1]== 0x02 )
     {
-        
+     /*   
        tx_msg.identifier =  0x7E8;
        tx_msg.data_length_code = 8;
        tx_msg.flags = CAN_MSG_FLAG_NONE;
@@ -237,6 +237,78 @@ void testPrintQueue(void)
        
         can_transmit(&tx_msg, portMAX_DELAY);
        
+       */
        
+       tx_msg.identifier =  0x7E8;
+       tx_msg.data_length_code = 8;
+       tx_msg.flags = CAN_MSG_FLAG_NONE;
+       tx_msg.data[0] = 0x10;
+       tx_msg.data[1] = 0x34;                               
+       tx_msg.data[2] = 0x49;
+       tx_msg.data[3] = 0x02;
+       tx_msg.data[4] = 0x01;
+       tx_msg.data[5] = 0x00;
+       tx_msg.data[6] = 0x00;
+       tx_msg.data[7] = 0x00;
+       
+        can_transmit(&tx_msg, portMAX_DELAY);
+        
+      tx_msg.identifier =  0x7E8;
+       tx_msg.data_length_code = 8;
+       tx_msg.flags = CAN_MSG_FLAG_NONE;
+       tx_msg.data[0] = 0x21;
+       tx_msg.data[1] = 0x49;                               
+       tx_msg.data[2] = 0x02;
+       tx_msg.data[3] = 0x02;
+       tx_msg.data[4] = 0x47;
+       tx_msg.data[5] = 0x31;
+       tx_msg.data[6] = 0x4A;
+       tx_msg.data[7] = 0x43;
+       
+       can_transmit(&tx_msg, portMAX_DELAY);
+        
+      tx_msg.identifier =  0x7E8;
+       tx_msg.data_length_code = 8;
+       tx_msg.flags = CAN_MSG_FLAG_NONE;
+       tx_msg.data[0] = 0x22;
+       tx_msg.data[1] = 0x49;                               
+       tx_msg.data[2] = 0x02;
+       tx_msg.data[3] = 0x03;
+       tx_msg.data[4] = 0x35;
+       tx_msg.data[5] = 0x34;
+       tx_msg.data[6] = 0x34;
+       tx_msg.data[7] = 0x34;
+       
+        can_transmit(&tx_msg, portMAX_DELAY);
+        
+        tx_msg.identifier =  0x7E8;
+       tx_msg.data_length_code = 8;
+       tx_msg.flags = CAN_MSG_FLAG_NONE;
+       tx_msg.data[0] = 0x23;
+       tx_msg.data[1] = 0x49;                               
+       tx_msg.data[2] = 0x02;
+       tx_msg.data[3] = 0x04;
+       tx_msg.data[4] = 0x52;
+       tx_msg.data[5] = 0x37;
+       tx_msg.data[6] = 0x32;
+       tx_msg.data[7] = 0x35;
+       
+        can_transmit(&tx_msg, portMAX_DELAY);
+        
+        tx_msg.identifier =  0x7E8;
+       tx_msg.data_length_code = 8;
+       tx_msg.flags = CAN_MSG_FLAG_NONE;
+       tx_msg.data[0] = 0x24;
+       tx_msg.data[1] = 0x49;                               
+       tx_msg.data[2] = 0x02;
+       tx_msg.data[3] = 0x05;
+       tx_msg.data[4] = 0x32;
+       tx_msg.data[5] = 0x33;
+       tx_msg.data[6] = 0x36;
+       tx_msg.data[7] = 0x37;
+       
+        can_transmit(&tx_msg, portMAX_DELAY);
+
+
     }
  }

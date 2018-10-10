@@ -30,6 +30,11 @@
 #define RX_BUFFER_MAX                   20
 #define CAN_TAG                     "CAN"
 
+#define OBD_VIN 1
+//#define EMU_VIN 2
+#define SERVICE01 1
+#define SERVICE09 1
+
 
 extern SemaphoreHandle_t can_rx;
 extern SemaphoreHandle_t can_tx;
@@ -42,7 +47,10 @@ QueueHandle_t txCanQueue;
 extern QueueHandle_t controlEvents;
 
 void testPrintQueue(void);
- void checkFakeVin(can_message_t *rx_msg);
+void FakeResponse (can_message_t *rx_msg);
+void Service01(can_message_t *rx_msg );
+void Service09(can_message_t *rx_msg );
+
 
 
 static const can_filter_config_t f_config = CAN_FILTER_CONFIG_ACCEPT_ALL();
@@ -84,7 +92,7 @@ void can_receive_task(void *arg)
           msg_timestamped.msg.data[i] = rx_msg.data[i];
         }
         
-        checkFakeVin(&rx_msg);
+        FakeResponse (&rx_msg);
               //printCanMessage(&rx_msg,iterations);
        ControlEvents cs2 = EV_CAN_RECEIVED;    
        xQueueSend(controlEvents, &cs2, portMAX_DELAY);
@@ -187,128 +195,249 @@ void testPrintQueue(void)
      
   */     
  
- void checkFakeVin(can_message_t *rx_msg)
+ void FakeResponse (can_message_t *rx_msg)
  {
+        
+       // if (isAddressGood(rx_msg.identifier))    
+        //if (rx_msg.identifier == 0x7DF || rx_msg.identifier ==0x07E0 ) {
+               
+          {
+            ESP_LOGI(CAN_TAG, "Received Service %d", rx_msg->data[1] );
+           switch (rx_msg->data[1])
+           {
+            case 0x01: { Service01(rx_msg); break;}
+            case 0x09: { Service09(rx_msg); break;}
+            default:break;
+           }
+        }
  
-  can_message_t tx_msg;
- 
-    if (rx_msg->data[1]== 0x09 && rx_msg->data[1]== 0x02 )
-    {
-     /*   
-       tx_msg.identifier =  0x7E8;
-       tx_msg.data_length_code = 8;
-       tx_msg.flags = CAN_MSG_FLAG_NONE;
-       tx_msg.data[0] = 0x10;
-       tx_msg.data[1] = 0x14;                               
-       tx_msg.data[2] = 0x49;
-       tx_msg.data[3] = 0x02;
-       tx_msg.data[4] = 0x01;
-       tx_msg.data[5] = 0x31;
-       tx_msg.data[6] = 0x41;
-       tx_msg.data[7] = 0x31;
-       
-        can_transmit(&tx_msg, portMAX_DELAY);
-        
-      tx_msg.identifier =  0x7E8;
-       tx_msg.data_length_code = 8;
-       tx_msg.flags = CAN_MSG_FLAG_NONE;
-       tx_msg.data[0] = 0x21;
-       tx_msg.data[1] = 0x4A;                               
-       tx_msg.data[2] = 0x43;
-       tx_msg.data[3] = 0x35;
-       tx_msg.data[4] = 0x34;
-       tx_msg.data[5] = 0x34;
-       tx_msg.data[6] = 0x34;
-       tx_msg.data[7] = 0x51;
-       
-       can_transmit(&tx_msg, portMAX_DELAY);
-        
-      tx_msg.identifier =  0x7E8;
-       tx_msg.data_length_code = 8;
-       tx_msg.flags = CAN_MSG_FLAG_NONE;
-       tx_msg.data[0] = 0x22;
-       tx_msg.data[1] = 0x37;                               
-       tx_msg.data[2] = 0x32;
-       tx_msg.data[3] = 0x35;
-       tx_msg.data[4] = 0x32;
-       tx_msg.data[5] = 0x33;
-       tx_msg.data[6] = 0x36;
-       tx_msg.data[7] = 0x37;
-       
-        can_transmit(&tx_msg, portMAX_DELAY);
-       
-       */
-       
-       tx_msg.identifier =  0x7E8;
-       tx_msg.data_length_code = 8;
-       tx_msg.flags = CAN_MSG_FLAG_NONE;
-       tx_msg.data[0] = 0x10;
-       tx_msg.data[1] = 0x34;                               
-       tx_msg.data[2] = 0x49;
-       tx_msg.data[3] = 0x02;
-       tx_msg.data[4] = 0x01;
-       tx_msg.data[5] = 0x00;
-       tx_msg.data[6] = 0x00;
-       tx_msg.data[7] = 0x00;
-       
-        can_transmit(&tx_msg, portMAX_DELAY);
-        
-      tx_msg.identifier =  0x7E8;
-       tx_msg.data_length_code = 8;
-       tx_msg.flags = CAN_MSG_FLAG_NONE;
-       tx_msg.data[0] = 0x21;
-       tx_msg.data[1] = 0x49;                               
-       tx_msg.data[2] = 0x02;
-       tx_msg.data[3] = 0x02;
-       tx_msg.data[4] = 0x47;
-       tx_msg.data[5] = 0x31;
-       tx_msg.data[6] = 0x4A;
-       tx_msg.data[7] = 0x43;
-       
-       can_transmit(&tx_msg, portMAX_DELAY);
-        
-      tx_msg.identifier =  0x7E8;
-       tx_msg.data_length_code = 8;
-       tx_msg.flags = CAN_MSG_FLAG_NONE;
-       tx_msg.data[0] = 0x22;
-       tx_msg.data[1] = 0x49;                               
-       tx_msg.data[2] = 0x02;
-       tx_msg.data[3] = 0x03;
-       tx_msg.data[4] = 0x35;
-       tx_msg.data[5] = 0x34;
-       tx_msg.data[6] = 0x34;
-       tx_msg.data[7] = 0x34;
-       
-        can_transmit(&tx_msg, portMAX_DELAY);
-        
-        tx_msg.identifier =  0x7E8;
-       tx_msg.data_length_code = 8;
-       tx_msg.flags = CAN_MSG_FLAG_NONE;
-       tx_msg.data[0] = 0x23;
-       tx_msg.data[1] = 0x49;                               
-       tx_msg.data[2] = 0x02;
-       tx_msg.data[3] = 0x04;
-       tx_msg.data[4] = 0x52;
-       tx_msg.data[5] = 0x37;
-       tx_msg.data[6] = 0x32;
-       tx_msg.data[7] = 0x35;
-       
-        can_transmit(&tx_msg, portMAX_DELAY);
-        
-        tx_msg.identifier =  0x7E8;
-       tx_msg.data_length_code = 8;
-       tx_msg.flags = CAN_MSG_FLAG_NONE;
-       tx_msg.data[0] = 0x24;
-       tx_msg.data[1] = 0x49;                               
-       tx_msg.data[2] = 0x02;
-       tx_msg.data[3] = 0x05;
-       tx_msg.data[4] = 0x32;
-       tx_msg.data[5] = 0x33;
-       tx_msg.data[6] = 0x36;
-       tx_msg.data[7] = 0x37;
-       
-        can_transmit(&tx_msg, portMAX_DELAY);
-
-
-    }
  }
+ 
+ 
+
+void Service01(can_message_t *rx_msg )
+{
+#ifdef SERVICE01
+
+    can_message_t tx;
+    can_message_t *tx_msg = &tx;
+    
+     ESP_LOGI(CAN_TAG, "PID = %d ",rx_msg->data[2] );
+     tx_msg->identifier =  0x7E8;
+     tx_msg->data_length_code = 8;
+     tx_msg->flags = CAN_MSG_FLAG_NONE;
+       
+    switch (rx_msg->data[2])
+    {
+      case 0x00:
+      {
+         tx_msg->data[0] = 0x06;
+         tx_msg->data[1] = 0x41;
+         tx_msg->data[2] = 0x00;
+         tx_msg->data[3] = 0xFF;
+         tx_msg->data[4] = 0xFF;
+         tx_msg->data[5] = 0xFF;
+         tx_msg->data[6] = 0x00;
+         tx_msg->data[7] = 0x00;
+        break;
+      }
+    
+     case 0x20:
+      {
+         tx_msg->data[0] = 0x06;
+         tx_msg->data[1] = 0x41;
+         tx_msg->data[2] = 0x20;
+         tx_msg->data[3] = 0xFF;
+         tx_msg->data[4] = 0xFF;
+         tx_msg->data[5] = 0xFF;
+         tx_msg->data[6] = 0xFF;
+         tx_msg->data[7] = 0x00;
+        break;
+      }
+    
+     case 0x40:
+      {
+         tx_msg->data[0] = 0x06;
+         tx_msg->data[1] = 0x41;
+         tx_msg->data[2] = 0x40;
+         tx_msg->data[3] = 0xFF;
+         tx_msg->data[4] = 0xFF;
+         tx_msg->data[5] = 0xFF;
+         tx_msg->data[6] = 0xFF;
+         tx_msg->data[7] = 0x00;
+        break;
+      }
+    
+     case 0x60:
+      {
+         tx_msg->data[0] = 0x06;
+         tx_msg->data[1] = 0x41;
+         tx_msg->data[2] = 0x60;
+         tx_msg->data[3] = 0xFF;
+         tx_msg->data[4] = 0xFF;
+         tx_msg->data[5] = 0xFF;
+         tx_msg->data[6] = 0xFF;
+         tx_msg->data[7] = 0x00;
+        break;
+      }
+    
+    
+     
+     default:break;
+    }
+
+     ESP_LOGI(CAN_TAG, "PID = %d transmitted",rx_msg->data[2] );
+     can_transmit(tx_msg, portMAX_DELAY);
+#endif     
+}
+
+void Service09  (can_message_t *rx_msg )
+{
+#ifdef SERVICE09
+
+  if (rx_msg->data[0] == 0x30) //FCF
+  {
+    
+  
+  } 
+   
+    can_message_t tx;
+    can_message_t *tx_msg = &tx;
+    
+     ESP_LOGI(CAN_TAG, "PID = %d ",rx_msg->data[2] );
+     tx_msg->identifier =  0x7E8;
+     tx_msg->data_length_code = 8;
+     tx_msg->flags = CAN_MSG_FLAG_NONE;
+       
+   switch (rx_msg->data[2])
+   {
+    case 0x02:          //VIN Request
+    {
+    
+  #ifdef EMU_VIN
+  ESP_LOGI(CAN_TAG, "EMU VIN  ");
+       tx_msg->data[0] = 0x10;
+       tx_msg->data[1] = 0x14;
+       tx_msg->data[2] = 0x40;
+       tx_msg->data[3] = 0x02;
+       tx_msg->data[4] = 0x01;
+       tx_msg->data[5] = 0x57;
+       tx_msg->data[6] = 0x50;
+       tx_msg->data[7] = 0x30;
+      can_transmit(tx_msg, portMAX_DELAY);
+      vTaskDelay(5 / portTICK_PERIOD_MS);  
+  
+       tx_msg->data[0] = 0x21;
+       tx_msg->data[1] = 0x5A;
+       tx_msg->data[2] = 0x5A;
+       tx_msg->data[3] = 0x5A;
+       tx_msg->data[4] = 0x39;
+       tx_msg->data[5] = 0x39;
+       tx_msg->data[6] = 0x5A;
+       tx_msg->data[7] = 0x54;
+      can_transmit(tx_msg, portMAX_DELAY);
+      vTaskDelay(5 / portTICK_PERIOD_MS);
+  
+  
+       tx_msg->data[0] = 0x22;
+       tx_msg->data[1] = 0x53;
+       tx_msg->data[2] = 0x33;
+       tx_msg->data[3] = 0x39;
+       tx_msg->data[4] = 0x32;
+       tx_msg->data[5] = 0x31;
+       tx_msg->data[6] = 0x32;
+       tx_msg->data[7] = 0x34;
+      can_transmit(tx_msg, portMAX_DELAY);
+       
+  
+  #endif
+    
+#ifdef OBD_VIN
+      
+      ESP_LOGI(CAN_TAG, "OBD VIN  ");
+                
+       tx_msg->identifier =  0x7E8;
+       tx_msg->data_length_code = 8;
+       tx_msg->flags = CAN_MSG_FLAG_NONE;
+       tx_msg->data[0] = 0x10;
+       tx_msg->data[1] = 0x22;                               
+       tx_msg->data[2] = 0x49;
+       tx_msg->data[3] = 0x02;
+       tx_msg->data[4] = 0x01;
+       tx_msg->data[5] = 0x00;
+       tx_msg->data[6] = 0x00;
+       tx_msg->data[7] = 0x00;
+       
+        can_transmit(tx_msg, portMAX_DELAY);
+        vTaskDelay(5 / portTICK_PERIOD_MS);
+        
+       tx_msg->identifier =  0x7E8;
+       tx_msg->data_length_code = 8;
+       tx_msg->flags = CAN_MSG_FLAG_NONE;
+       tx_msg->data[0] = 0x21;
+       tx_msg->data[1] = 0x49;                               
+       tx_msg->data[2] = 0x02;
+       tx_msg->data[3] = 0x02;
+       tx_msg->data[4] = 0x47;
+       tx_msg->data[5] = 0x31;
+       tx_msg->data[6] = 0x4A;
+       tx_msg->data[7] = 0x43;
+       
+       can_transmit(tx_msg, portMAX_DELAY);
+       vTaskDelay(10 / portTICK_PERIOD_MS);
+        
+      tx_msg->identifier =  0x7E8;
+       tx_msg->data_length_code = 8;
+       tx_msg->flags = CAN_MSG_FLAG_NONE;
+       tx_msg->data[0] = 0x22;
+       tx_msg->data[1] = 0x49;                               
+       tx_msg->data[2] = 0x02;
+       tx_msg->data[3] = 0x03;
+       tx_msg->data[4] = 0x35;
+       tx_msg->data[5] = 0x34;
+       tx_msg->data[6] = 0x34;
+       tx_msg->data[7] = 0x34;
+       
+        can_transmit(tx_msg, portMAX_DELAY);
+         vTaskDelay(5 / portTICK_PERIOD_MS);
+        
+        tx_msg->identifier =  0x7E8;
+       tx_msg->data_length_code = 8;
+       tx_msg->flags = CAN_MSG_FLAG_NONE;
+       tx_msg->data[0] = 0x23;
+       tx_msg->data[1] = 0x49;                               
+       tx_msg->data[2] = 0x02;
+       tx_msg->data[3] = 0x04;
+       tx_msg->data[4] = 0x52;
+       tx_msg->data[5] = 0x37;
+       tx_msg->data[6] = 0x32;
+       tx_msg->data[7] = 0x35;
+       
+        can_transmit(tx_msg, portMAX_DELAY);
+         vTaskDelay(5 / portTICK_PERIOD_MS);
+         
+       tx_msg->identifier =  0x7E8;
+       tx_msg->data_length_code = 8;
+       tx_msg->flags = CAN_MSG_FLAG_NONE;
+       tx_msg->data[0] = 0x24;
+       tx_msg->data[1] = 0x49;                               
+       tx_msg->data[2] = 0x02;
+       tx_msg->data[3] = 0x05;
+       tx_msg->data[4] = 0x32;
+       tx_msg->data[5] = 0x33;
+       tx_msg->data[6] = 0x36;
+       tx_msg->data[7] = 0x37;
+       
+        can_transmit(tx_msg, portMAX_DELAY);
+                                            
+         vTaskDelay(5 / portTICK_PERIOD_MS);
+       
+#endif
+      ESP_LOGI(CAN_TAG, "VIN transmitted ");
+    }
+   
+   
+   }
+#endif
+}
+ 

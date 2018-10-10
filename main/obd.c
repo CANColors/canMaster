@@ -33,8 +33,8 @@ void obd_wait_task(void *arg)
        canM.msg.identifier =  0x7E8;
        canM.msg.data_length_code = 8;
        canM.msg.flags = CAN_MSG_FLAG_NONE;
-       canM.msg.data[0] = 0x78;
-       canM.msg.data[1] = 0x00;                               
+       canM.msg.data[0] = 0x01;
+       canM.msg.data[1] = 0x78;                               
        canM.msg.data[2] = 0x00;
        canM.msg.data[3] = 0x00;
        canM.msg.data[4] = 0x00;

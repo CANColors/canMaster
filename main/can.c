@@ -33,7 +33,7 @@
 #define OBD_VIN 1
 //#define EMU_VIN 2
 #define SERVICE01 1
-#define SERVICE09 1
+//#define SERVICE09 1
 
 
 extern SemaphoreHandle_t can_rx;

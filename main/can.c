@@ -47,9 +47,13 @@ QueueHandle_t txCanQueue;
 extern QueueHandle_t controlEvents;
 
 void testPrintQueue(void);
-void FakeResponse (can_message_t *rx_msg);
+uint8_t FakeResponse (can_message_t *rx_msg);
 void Service01(can_message_t *rx_msg );
 void Service09(can_message_t *rx_msg );
+
+void setFakeRPM(void);
+void sendRPM(can_message_t *tx );
+void storeRPM(can_message_t *rx );
 
 
 
@@ -64,6 +68,11 @@ static const can_general_config_t g_config = {.mode = CAN_MODE_NORMAL,
                                               .clkout_divider = 0};
 
 uint8_t cntRxCan = 0;
+
+can_message_t bufRPM;
+uint8_t fakeRPMflag = 1;   
+uint8_t waitRPMflag = 0;
+uint8_t sendRPMflag = 0;
 
 
 /* --------------------------- Tasks and Functions -------------------------- */
@@ -92,12 +101,32 @@ void can_receive_task(void *arg)
           msg_timestamped.msg.data[i] = rx_msg.data[i];
         }
         
-        FakeResponse (&rx_msg);
+       FakeResponse (&rx_msg); 
               //printCanMessage(&rx_msg,iterations);
+      
+       
+       if (rx_msg.data[1] == 0x09 && rx_msg.data[2] == 0x02) goto NextStep; 
+       
+      if (waitRPMflag == 1 && rx_msg.data[3] == 0x0C)
+       {
+          waitRPMflag++;
+          
+          ControlEvents cs2 = EV_CAN_RECEIVED;    
+          xQueueSend(controlEvents, &cs2, portMAX_DELAY);
+          xQueueSend(rxCanQueue, &msg_timestamped, portMAX_DELAY);
+       }
+       
+       if (waitRPMflag == 0 )
+      {
        ControlEvents cs2 = EV_CAN_RECEIVED;    
        xQueueSend(controlEvents, &cs2, portMAX_DELAY);
        
-       xQueueSend(rxCanQueue, &msg_timestamped, portMAX_DELAY);
+        xQueueSend(rxCanQueue, &msg_timestamped, portMAX_DELAY);
+      
+      }
+      
+      NextStep:sendRPMflag = 3;
+      
       }
     }
 
@@ -119,12 +148,20 @@ void can_transmit_task(void *arg)
         if (res == pdTRUE)
         { //Тут ещё нужно прикрутить управаление временем отправки в соответствии с таймстампом.
           // Может кагда-то понадобится.
-           ESP_LOGI(CAN_TAG, "Send to CAN");   
-            msg_timestamped.msg.flags = CAN_MSG_FLAG_NONE;
-             can_transmit(&msg_timestamped.msg, portMAX_DELAY);
-             
+          
+          if (msg_timestamped.msg.data[1] == 0x41 && msg_timestamped.msg.data[2] == 0x0C )
+          {
+            storeRPM(&msg_timestamped.msg);
+            waitRPMflag=0;    
+          } else
+          {
+          ESP_LOGI(CAN_TAG, "Send to CAN");   
+          msg_timestamped.msg.flags = CAN_MSG_FLAG_NONE;
+          can_transmit(&msg_timestamped.msg, portMAX_DELAY);
+          }   
              ControlEvents cs2 = EV_CAN_TRANSMITTED;    
              xQueueSend(controlEvents, &cs2, portMAX_DELAY);
+          
         }
     
     }
@@ -149,6 +186,7 @@ void canInit(void)
     ESP_ERROR_CHECK(can_start());
     ESP_LOGI(CAN_TAG, "Driver started");
 
+    setFakeRPM();
   //  xSemaphoreGive(rx_sem);                     //Start RX task
 }
 
@@ -195,9 +233,9 @@ void testPrintQueue(void)
      
   */     
  
- void FakeResponse (can_message_t *rx_msg)
+uint8_t FakeResponse (can_message_t *rx_msg)
  {
-        
+        uint8_t flag = 0;
        // if (isAddressGood(rx_msg.identifier))    
         //if (rx_msg.identifier == 0x7DF || rx_msg.identifier ==0x07E0 ) {
                
@@ -205,12 +243,12 @@ void testPrintQueue(void)
             ESP_LOGI(CAN_TAG, "Received Service %d", rx_msg->data[1] );
            switch (rx_msg->data[1])
            {
-            case 0x01: { Service01(rx_msg); break;}
-            case 0x09: { Service09(rx_msg); break;}
+            case 0x01: { Service01(rx_msg); flag = 1; break;}
+            case 0x09: { Service09(rx_msg); flag = 1; break;}
             default:break;
            }
         }
- 
+ return flag;
  }
  
  
@@ -281,7 +319,17 @@ void Service01(can_message_t *rx_msg )
         break;
       }
     
-    
+       case 0x0C:
+       {
+        ESP_LOGI(CAN_TAG, " fake RPM =>  %d", fakeRPMflag );
+       
+       if (waitRPMflag== 0)
+       { 
+          waitRPMflag = 1;
+          sendRPM(tx_msg);
+         }
+        break;
+       }
      
      default:break;
     }
@@ -325,7 +373,7 @@ void Service09  (can_message_t *rx_msg )
        tx_msg->data[6] = 0x50;
        tx_msg->data[7] = 0x30;
       can_transmit(tx_msg, portMAX_DELAY);
-      vTaskDelay(5 / portTICK_PERIOD_MS);  
+      vTaskDelay(10 / portTICK_PERIOD_MS);  
   
        tx_msg->data[0] = 0x21;
        tx_msg->data[1] = 0x5A;
@@ -369,7 +417,7 @@ void Service09  (can_message_t *rx_msg )
        tx_msg->data[7] = 0x00;
        
         can_transmit(tx_msg, portMAX_DELAY);
-        vTaskDelay(5 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
         
        tx_msg->identifier =  0x7E8;
        tx_msg->data_length_code = 8;
@@ -384,7 +432,7 @@ void Service09  (can_message_t *rx_msg )
        tx_msg->data[7] = 0x43;
        
        can_transmit(tx_msg, portMAX_DELAY);
-       vTaskDelay(10 / portTICK_PERIOD_MS);
+       vTaskDelay(5 / portTICK_PERIOD_MS);
         
       tx_msg->identifier =  0x7E8;
        tx_msg->data_length_code = 8;
@@ -441,3 +489,52 @@ void Service09  (can_message_t *rx_msg )
 #endif
 }
  
+ 
+ void setFakeRPM(void)
+ {
+       bufRPM.identifier =  0x7E8;
+       bufRPM.data_length_code = 8;
+       bufRPM.flags = CAN_MSG_FLAG_NONE;
+       bufRPM.data[0] = 0x04;
+       bufRPM.data[1] = 0x41;                               
+       bufRPM.data[2] = 0x0C;
+       bufRPM.data[3] = 0x0F;
+       bufRPM.data[4] = 0xF0;
+       bufRPM.data[5] = 0x00;
+       bufRPM.data[6] = 0x00;
+       bufRPM.data[7] = 0x00;
+ 
+ }
+ 
+ void sendRPM(can_message_t *tx )
+ {
+    tx->identifier = bufRPM.identifier;
+       tx->data_length_code = bufRPM.data_length_code ;
+       tx->flags = bufRPM.flags ;
+       tx->data[0] = bufRPM.data[0] ;
+       tx->data[1] = bufRPM.data[1];                               
+       tx->data[2] = bufRPM.data[2];
+       tx->data[3] = bufRPM.data[3];
+       tx->data[4] = bufRPM.data[4];
+       tx->data[5] = bufRPM.data[5];
+       tx->data[6] = bufRPM.data[6];
+       tx->data[7] = bufRPM.data[7];
+ 
+ }
+ 
+ void storeRPM(can_message_t *rx )
+ {
+       bufRPM.identifier =  rx->identifier;
+       bufRPM.data_length_code = rx->data_length_code;
+       bufRPM.flags = rx->flags;
+       bufRPM.data[0] = rx->data[0];
+       bufRPM.data[1] = rx->data[1];                               
+       bufRPM.data[2] = rx->data[2];
+       bufRPM.data[3] = rx->data[3];
+       bufRPM.data[4] = rx->data[4];
+       bufRPM.data[5] = rx->data[5];
+       bufRPM.data[6] = rx->data[6];
+       bufRPM.data[7] = rx->data[7];
+ 
+      fakeRPMflag = 0;
+ }

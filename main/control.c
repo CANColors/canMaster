@@ -127,7 +127,7 @@ void controlCANRequestState(ControlEvents ev)
    case EV_CAN_RECEIVED: 
    { 
       xSemaphoreGive(net_tx); //  sending the request
-      xSemaphoreGive(obd_tx_wait);
+     // xSemaphoreGive(obd_tx_wait);
       changeState(CONTROL_SEND_REQUEST);
      
     break;

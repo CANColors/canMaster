@@ -134,10 +134,10 @@ void can_transmit_task(void *arg)
         if (res == pdTRUE)
         { //Тут ещё нужно прикрутить управаление временем отправки в соответствии с таймстампом.
           // Может кагда-то понадобится.
-          OBDSend (msg_timestamped);
-         ESP_LOGI(CAN_TAG, "Send to CAN");   
-         msg_timestamped.msg.flags = CAN_MSG_FLAG_NONE;
-         can_transmit(&msg_timestamped.msg, portMAX_DELAY);
+          OBDSend (&msg_timestamped);
+       //  ESP_LOGI(CAN_TAG, "Send to CAN");   
+       // msg_timestamped.msg.flags = CAN_MSG_FLAG_NONE;
+       // can_transmit(&msg_timestamped.msg, portMAX_DELAY);
              
          ControlEvents cs2 = EV_CAN_TRANSMITTED;    
          xQueueSend(controlEvents, &cs2, portMAX_DELAY);

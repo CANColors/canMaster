@@ -1,16 +1,22 @@
 #include <esp_err.h>
 #include <esp_log.h>
 
+#include <string.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
 
 
+
 #include "can.h"
 #include "config.h"
 #include "control.h"
 #include "obd.h"
+#include "iso.h"
+
+#define SERVICE01 1
+#define SERVICE09 1
 
 extern SemaphoreHandle_t obd_tx_wait;
 
@@ -22,6 +28,8 @@ static const char *TAG="OBD";
 
 OBDResponseStatus Service01(can_message_t *rx_msg );
 OBDResponseStatus Service09(can_message_t *rx_msg );
+OBDResponseStatus Service01Response(can_message_t *rx_msg );
+OBDResponseStatus Service09Response(can_message_t *rx_msg );
 
 OBDPid  S01_P00;
 OBDPid  S01_P20;
@@ -32,7 +40,9 @@ OBDPid  S01_P0C;
 OBDPid  S09_P02;
 
 
-
+/****************************************************************************/
+/*                                                                          */
+/****************************************************************************/
 void OBDInit(void)
 {
     S01_P00.service = 01;
@@ -137,7 +147,9 @@ void OBDInit(void)
 }
 
 
-
+/****************************************************************************/
+/*                                                                          */
+/****************************************************************************/
 OBDResponseStatus OBDResponse (can_message_t *rx_msg)
  {
       
@@ -157,14 +169,129 @@ OBDResponseStatus OBDResponse (can_message_t *rx_msg)
  return status;
  }
  
+/****************************************************************************/
+/*                                                                          */
+/****************************************************************************/
+ OBDResponseStatus OBDSend (can_msg_timestamped *msg_timestamped)
+{
+   OBDResponseStatus status = OBD_REQUEST_NONE; 
+       // if (isAddressGood(rx_msg.identifier))    
+        //if (rx_msg.identifier == 0x7DF || rx_msg.identifier ==0x07E0 ) {
+               
+          {
+            ESP_LOGI(TAG, "Received Service %d", msg_timestamped->msg.data[1] );
+           switch (msg_timestamped->msg.data[1])
+           {
+            case 0x01: {status = Service01Response(&msg_timestamped->msg); break;}
+            case 0x09: {status = Service09Response(&msg_timestamped->msg); break;}
+            default:{status = OBD_REQUEST_NONE; break;}
+           }
+       }
+ return status; 
+  
+  
+}
+ 
+ 
+/****************************************************************************/
+/*                                                                          */
+/****************************************************************************/ 
+OBDResponseStatus Service01Response(can_message_t *rx_msg )
+{
+OBDResponseStatus res = OBD_RESPONSE_NONE;
+#ifdef SERVICE01
 
+   // ISOStatus isoStatus;
+    
+    
+     ESP_LOGI(TAG, "Service = %d  PID = %d ", rx_msg->data[1], rx_msg->data[2] );
+        
+    
+    switch (rx_msg->data[2])
+    {
+      case 0x00:
+      {
+        S01_P00.requestState = OBD_REQUEST_NONE;
+        memset (S01_P00.response, 0, S01_P00.resLen);
+        
+        S01_P00.resLen =   rx_msg->data_length_code-1;
+        memcpy(S01_P00.response,(rx_msg->data)+1, S01_P00.resLen);
+              
+        break;
+      }
+    
+      case 0x20:
+      {
+        S01_P20.requestState = OBD_REQUEST_NONE;
+        memset (S01_P20.response, 0, S01_P20.resLen);
+        
+        if (rx_msg->data_length_code-1 >  S01_P20.resLen)  realloc(S01_P20.response, rx_msg->data_length_code-1 );
+        S01_P20.resLen =   rx_msg->data_length_code-1;
+        
+        memcpy(S01_P20.response, (rx_msg->data)+1, S01_P20.resLen);
+              
+      }
+     
+     case 0x40:
+      {
+        S01_P40.requestState = OBD_REQUEST_NONE;
+        memset (S01_P40.response, 0, S01_P40.resLen);
+        
+        if (rx_msg->data_length_code-1 >  S01_P40.resLen)  realloc(S01_P40.response, rx_msg->data_length_code-1 );
+        S01_P40.resLen =   rx_msg->data_length_code-1;
+        
+        memcpy(S01_P40.response, (rx_msg->data)+1, S01_P40.resLen);
+        break;
+      }
+    
+    case 0x60:
+      {
+       S01_P60.requestState = OBD_REQUEST_NONE;
+        memset (S01_P60.response, 0, S01_P60.resLen);
+        
+        if (rx_msg->data_length_code-1 >  S01_P60.resLen)  realloc(S01_P60.response, rx_msg->data_length_code-1 );
+        S01_P60.resLen =   rx_msg->data_length_code-1;
+        
+        memcpy(S01_P60.response, (rx_msg->data)+1, S01_P60.resLen);
+        break;
+      }
+    
+    case 0x0C:
+      {
+      S01_P0C.requestState = OBD_REQUEST_NONE;
+        memset (S01_P0C.response, 0, S01_P0C.resLen);
+        
+        if (rx_msg->data_length_code-1 >  S01_P0C.resLen)  realloc(S01_P0C.response, rx_msg->data_length_code-1 );
+        S01_P0C.resLen =   rx_msg->data_length_code-1;
+        
+        memcpy(S01_P0C.response, (rx_msg->data)+1, S01_P0C.resLen);
+        break;
+      }
+      
+         
+     default:
+     {
+      res = OBD_RESPONSE_NONE;
+      break;
+     }
+
+    }
+    
+#endif 
+
+  return res;    
+}
+
+/****************************************************************************/
+/*                                                                          */
+/****************************************************************************/
  
 OBDResponseStatus Service01(can_message_t *rx_msg )
 {
 OBDResponseStatus res = OBD_RESPONSE_NONE;
 #ifdef SERVICE01
 
-    ISOStatus isoStatus;
+      ISOStatus isoStatus = ISOSTATUS_NONE;
     
     
      ESP_LOGI(TAG, "Service = %d  PID = %d ", rx_msg->data[1], rx_msg->data[2] );
@@ -252,11 +379,14 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
   return res;    
 }
 
+/****************************************************************************/
+/*                                                                          */
+/****************************************************************************/
 OBDResponseStatus  Service09  (can_message_t *rx_msg )
 {
 OBDResponseStatus res = OBD_RESPONSE_NONE;
 #ifdef SERVICE09
-
+       ISOStatus isoStatus = ISOSTATUS_NONE;
   
    switch (rx_msg->data[2])
    {
@@ -269,7 +399,7 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
         }
         else  res = OBD_RESPONSE_NONE;
                      
-        iso_send(S09_P02.response, S09_P02.resLen);
+       isoStatus = iso_send(S09_P02.response, S09_P02.resLen);
         if (isoStatus != ISOSTATUS_OK) res = OBS_RESPONSE_ERROR_NETWORK;
         ESP_LOGI(TAG, "VIN transmitted ");
         break;
@@ -289,8 +419,48 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
  return res;    
 }
 
+/****************************************************************************/
+/*                                                                          */
+/****************************************************************************/   
+OBDResponseStatus  Service09Response  (can_message_t *rx_msg )
+{
+  OBDResponseStatus res = OBD_RESPONSE_NONE;
+  ISOStatus isoStatus = ISOSTATUS_NONE;
+     
+   switch (rx_msg->data[2])
+   {
+    case 0x02:          //VIN Request
+    {
+    
+     if (S09_P02.requestState == OBD_REQUEST_NONE)
+        {
+           res = OBD_RESPONSE_NEED_TO_SEND;
+        }
+        else  res = OBD_RESPONSE_NONE;
+                     
+        isoStatus = iso_receiveMF( rx_msg, S09_P02.response, S09_P02.resLen);
+        if (isoStatus != ISOSTATUS_OK) res = OBS_RESPONSE_ERROR_NETWORK;
+        ESP_LOGI(TAG, "VIN received ");
+        break;
+     }
+     
+      default:
+     {
+      res = OBD_RESPONSE_NONE;
+      break;
+     }
+      
+    }
+   
+   
+   
 
+ return res;    
+}
 
+/****************************************************************************/
+/*                                                                          */
+/****************************************************************************/
 void obd_wait_task(void *arg)
 {
   

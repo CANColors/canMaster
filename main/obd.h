@@ -24,4 +24,6 @@ typedef enum
 } OBDResponseStatus;
 
 void obd_wait_task(void *arg);
+void OBDInit(void);
 OBDResponseStatus OBDResponse (can_message_t *rx_msg);
+OBDResponseStatus  OBDSend (can_msg_timestamped *msg_timestamped);

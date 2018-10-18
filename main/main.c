@@ -81,6 +81,7 @@ void app_main()
     set_time();
     MqttInitM();
     canInit();
+    OBDInit();
     
    //  xTaskCreatePinnedToCore(net_receive_task,  "NET_rx", 4096, NULL, NET_RX_TASK_PRIO, NULL, tskNO_AFFINITY);
      xTaskCreatePinnedToCore(mqtt_transmit_task, "NET_tx", 4096, NULL, NET_TX_TASK_PRIO, NULL, tskNO_AFFINITY);

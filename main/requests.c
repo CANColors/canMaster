@@ -137,20 +137,20 @@ char* request_server_masterrequest(void)
 /****************************************************************************/
 void request_can_send (CJSON_PUBLIC(cJSON *)jdata)
 {
-  char* json = cJSON_Print(jdata);
+  /*char* json = cJSON_Print(jdata);
   
   ESP_LOGI("CAN_SEND", "========================");
-//    ESP_LOGI("CAN_SEND", "print:%s", json);
+    ESP_LOGI("CAN_SEND", "print:%s", json);
     free (json);
-     
+    */
   cJSON *commands = cJSON_GetObjectItem(jdata,"cms");
  //  ESP_LOGI("CAN_SEND", "JSON parsed"); 
  //  ESP_LOGI("CAN_SEND", "is=%d", cJSON_IsArray(commands));
   if (cJSON_IsArray(commands) == 1)
   {
-    ESP_LOGI("CAN_SEND", "Array"); 
+  //  ESP_LOGI("CAN_SEND", "Array"); 
     int len =  cJSON_GetArraySize(commands);
-    ESP_LOGI("CAN_SEND", " Array size %d", len); 
+  //  ESP_LOGI("CAN_SEND", " Array size %d", len); 
     for (int i=0; i< len;i++)
     {
       cJSON *command = cJSON_GetArrayItem(commands, i);
@@ -164,7 +164,7 @@ void request_can_send (CJSON_PUBLIC(cJSON *)jdata)
         canM.msg.identifier =  cJSON_GetObjectItem(command,"ad")->valueint;
         canM.msg.data_length_code = cJSON_GetObjectItem(command,"dl")->valueint;
           cJSON *data = cJSON_GetObjectItem(command, "cd");
-          if (cJSON_IsArray(data) == cJSON_True)
+          if (cJSON_IsArray(data) == 1)
           {
              int data_len =  cJSON_GetArraySize(data);
              for (int j=0;j<data_len; j++)
@@ -172,7 +172,8 @@ void request_can_send (CJSON_PUBLIC(cJSON *)jdata)
                  canM.msg.data[j] =  cJSON_GetArrayItem(data, j)->valueint;
              }
           }
-    //       ESP_LOGI("HTTP RX", "=> address: %d, dl: %d, data[0]:%d", canM.msg.identifier, canM.msg.data_length_code, canM.msg.data[0]);
+       //    ESP_LOGI("MQTT RX", "=> address: %d, dl: %d, data[0]:%d, data[1]:%d, data[2]:%d",
+       //     canM.msg.identifier, canM.msg.data_length_code, canM.msg.data[0], canM.msg.data[1], canM.msg.data[2]);
           xQueueSend(txCanQueue, &canM, portMAX_DELAY);
       }
       

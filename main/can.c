@@ -95,8 +95,8 @@ void can_receive_task(void *arg)
         { 
          ESP_LOGI(CAN_TAG, "REceived");
           status =  OBDResponse (&rx_msg); 
-             ESP_LOGI(CAN_TAG, " Status: %d",  status );    
-          if (status == OBD_RESPONSE_NEED_TO_SEND)
+  
+         if (status == OBD_RESPONSE_NEED_TO_SEND)
           {
             can_msg_timestamped msg_timestamped;
             msg_timestamped.id = cntRxCan++;
@@ -108,8 +108,7 @@ void can_receive_task(void *arg)
               msg_timestamped.msg.data[i] = rx_msg.data[i];
             }
     
-            ESP_LOGI(CAN_TAG, "server=%d,  Status: %d",rx_msg.data[1],  status );    
-                                            
+                                        
         
             ControlEvents cs2 = EV_CAN_RECEIVED;    
             xQueueSend(controlEvents, &cs2, portMAX_DELAY);

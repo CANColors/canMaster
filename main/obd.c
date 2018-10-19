@@ -185,11 +185,11 @@ OBDResponseStatus OBDResponse (can_message_t *rx_msg)
         //if (rx_msg.identifier == 0x7DF || rx_msg.identifier ==0x07E0 ) {
                
           {
-            ESP_LOGI(TAG, "Received Service %d", msg_timestamped->msg.data[1] );
+            ESP_LOGI(TAG, "Received Service [1]=%d, [2] = %d", msg_timestamped->msg.data[1], msg_timestamped->msg.data[2] );
            switch (msg_timestamped->msg.data[1])
            {
-            case 0x01: {status = Service01Response(&msg_timestamped->msg); break;}
-            case 0x09: {status = Service09Response(&msg_timestamped->msg); break;}
+            case 0x41: {status = Service01Response(&msg_timestamped->msg); break;}
+            case 0x49: {status = Service09Response(&msg_timestamped->msg); break;}
             default:{status = OBD_REQUEST_NONE; break;}
            }
        }
@@ -205,12 +205,12 @@ OBDResponseStatus OBDResponse (can_message_t *rx_msg)
 OBDResponseStatus Service01Response(can_message_t *rx_msg )
 {
 OBDResponseStatus res = OBD_RESPONSE_NONE;
-#ifdef SERVICE01
+
 
    // ISOStatus isoStatus;
     
     
-     ESP_LOGI(TAG, "Service = %d  PID = %d ", rx_msg->data[1], rx_msg->data[2] );
+   //  ESP_LOGI(TAG, "Service = %d  PID = %d ", rx_msg->data[1], rx_msg->data[2] );
         
     
     switch (rx_msg->data[2])
@@ -231,8 +231,10 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
         S01_P20.requestState = OBD_REQUEST_NONE;
         memset (S01_P20.response, 0, S01_P20.resLen);
         
-        if (rx_msg->data_length_code-1 >  S01_P20.resLen)  realloc(S01_P20.response, rx_msg->data_length_code-1 );
-        S01_P20.resLen =   rx_msg->data_length_code-1;
+        if (rx_msg->data_length_code-1 >  S01_P20.resLen)
+        {  realloc(S01_P20.response, rx_msg->data_length_code-1 );
+          S01_P20.resLen =   rx_msg->data_length_code-1;
+          }
         
         memcpy(S01_P20.response, (rx_msg->data)+1, S01_P20.resLen);
               
@@ -243,8 +245,10 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
         S01_P40.requestState = OBD_REQUEST_NONE;
         memset (S01_P40.response, 0, S01_P40.resLen);
         
-        if (rx_msg->data_length_code-1 >  S01_P40.resLen)  realloc(S01_P40.response, rx_msg->data_length_code-1 );
-        S01_P40.resLen =   rx_msg->data_length_code-1;
+        if (rx_msg->data_length_code-1 >  S01_P40.resLen)
+        {  realloc(S01_P40.response, rx_msg->data_length_code-1 );
+          S01_P40.resLen =   rx_msg->data_length_code-1;
+          }
         
         memcpy(S01_P40.response, (rx_msg->data)+1, S01_P40.resLen);
         break;
@@ -255,8 +259,10 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
        S01_P60.requestState = OBD_REQUEST_NONE;
         memset (S01_P60.response, 0, S01_P60.resLen);
         
-        if (rx_msg->data_length_code-1 >  S01_P60.resLen)  realloc(S01_P60.response, rx_msg->data_length_code-1 );
-        S01_P60.resLen =   rx_msg->data_length_code-1;
+        if (rx_msg->data_length_code-1 >  S01_P60.resLen)
+        {  realloc(S01_P60.response, rx_msg->data_length_code-1 );
+          S01_P60.resLen =   rx_msg->data_length_code-1;
+          }
         
         memcpy(S01_P60.response, (rx_msg->data)+1, S01_P60.resLen);
         break;
@@ -264,13 +270,19 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
     
     case 0x0C:
       {
+     //   ESP_LOGI(TAG, "S01_P0C.resLen %d, rx_msg->data_length_code %d ", S01_P0C.resLen, rx_msg->data_length_code );
       S01_P0C.requestState = OBD_REQUEST_NONE;
         memset (S01_P0C.response, 0, S01_P0C.resLen);
         
-        if (rx_msg->data_length_code-1 >  S01_P0C.resLen)  realloc(S01_P0C.response, rx_msg->data_length_code-1 );
-        S01_P0C.resLen =   rx_msg->data_length_code-1;
+        if (rx_msg->data_length_code-1 >  S01_P0C.resLen) 
+        { 
+            realloc(S01_P0C.response, rx_msg->data_length_code-1 );
+            S01_P0C.resLen =   rx_msg->data_length_code-1;
+        }
         
         memcpy(S01_P0C.response, (rx_msg->data)+1, S01_P0C.resLen);
+          
+          ESP_LOGI(TAG, "RPM refreshed ");
         break;
       }
       
@@ -283,7 +295,7 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
 
     }
     
-#endif 
+
 
   return res;    
 }
@@ -468,7 +480,8 @@ OBDResponseStatus  Service09Response  (can_message_t *rx_msg )
 /****************************************************************************/
 /*                                                                          */
 /****************************************************************************/
-void obd_wait_task(void *arg)
+
+/* void obd_wait_task(void *arg)
 {
   
      while (1)
@@ -497,6 +510,26 @@ void obd_wait_task(void *arg)
       ESP_LOGI(TAG, "BIG Delay finished" );
       ControlState cs2 = EV_BIG_TIMEOUT;    //return to start
       xQueueSend(controlEvents, &cs2, portMAX_DELAY);
+  }
+
+}
+  */
+  
+  
+void obd_wait_task(void *arg)
+{
+     xSemaphoreTake(obd_tx_wait, portMAX_DELAY);
+     while (1)
+  {
+       S01_P00.requestState = OBD_REQUEST_NONE;
+       S01_P20.requestState = OBD_REQUEST_NONE;
+       S01_P40.requestState = OBD_REQUEST_NONE;
+       S01_P60.requestState = OBD_REQUEST_NONE;
+       S01_P0C.requestState = OBD_REQUEST_NONE;
+       
+       S09_P02.requestState = OBD_REQUEST_NONE;
+        watchdog();
+        vTaskDelay(pdMS_TO_TICKS(1000));
   }
 
 }

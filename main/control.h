@@ -36,3 +36,4 @@ typedef enum
 }ControlEvents;
 
 void control_task(void *arg);
+ void watchdog(void);

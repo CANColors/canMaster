@@ -103,6 +103,7 @@ void controlStartState(ControlEvents ev)
     {
         //Wait for data from CAN bus 
         xSemaphoreGive(can_rx);
+        xSemaphoreGive(obd_tx_wait);
         changeState(CONTROL_CAN_REQUEST_WAIT);
          break;
     }
@@ -231,4 +232,10 @@ void controlHTTPRequestSendState(ControlEvents ev)
 }
  */
  
+ void watchdog(void)
+ {
+     changeState(CONTROL_START);
+       ControlEvents cs2 = EV_START;    
+       xQueueSend(controlEvents, &cs2, portMAX_DELAY);
  
+ }

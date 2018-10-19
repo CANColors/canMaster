@@ -131,9 +131,9 @@ void mqtt_transmit_task(void *arg)
        xQueueSend(controlEvents, &cs2, portMAX_DELAY);
        
         char* data = request_server_masterrequest();
-         ESP_LOGI(TAG, "Message length:%d",  strlen(data));
-        int msg_id = esp_mqtt_client_publish(client, MQTT_REQUEST_TOPIC, data, strlen(data), 2, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+      //   ESP_LOGI(TAG, "Message length:%d",  strlen(data));
+        esp_mqtt_client_publish(client, MQTT_REQUEST_TOPIC, data, strlen(data), 0, 0);
+     //   ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
        
         free (data);
         

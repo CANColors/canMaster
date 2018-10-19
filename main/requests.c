@@ -140,12 +140,12 @@ void request_can_send (CJSON_PUBLIC(cJSON *)jdata)
   char* json = cJSON_Print(jdata);
   
   ESP_LOGI("CAN_SEND", "========================");
-    ESP_LOGI("CAN_SEND", "print:%s", json);
+//    ESP_LOGI("CAN_SEND", "print:%s", json);
     free (json);
      
   cJSON *commands = cJSON_GetObjectItem(jdata,"cms");
-   ESP_LOGI("CAN_SEND", "JSON parsed"); 
-   ESP_LOGI("CAN_SEND", "is=%d", cJSON_IsArray(commands));
+ //  ESP_LOGI("CAN_SEND", "JSON parsed"); 
+ //  ESP_LOGI("CAN_SEND", "is=%d", cJSON_IsArray(commands));
   if (cJSON_IsArray(commands) == 1)
   {
     ESP_LOGI("CAN_SEND", "Array"); 
@@ -155,7 +155,7 @@ void request_can_send (CJSON_PUBLIC(cJSON *)jdata)
     {
       cJSON *command = cJSON_GetArrayItem(commands, i);
       char* commandType = cJSON_GetObjectItem(command,"type")->valuestring;
-      ESP_LOGI("CAN_SEND", "command type:%s", commandType); 
+  //    ESP_LOGI("CAN_SEND", "command type:%s", commandType); 
      // if (strcmp(commandType, "canpackage"))
       {
         can_msg_timestamped canM;
@@ -172,7 +172,7 @@ void request_can_send (CJSON_PUBLIC(cJSON *)jdata)
                  canM.msg.data[j] =  cJSON_GetArrayItem(data, j)->valueint;
              }
           }
-           ESP_LOGI("HTTP RX", "=> address: %d, dl: %d, data[0]:%d", canM.msg.identifier, canM.msg.data_length_code, canM.msg.data[0]);
+    //       ESP_LOGI("HTTP RX", "=> address: %d, dl: %d, data[0]:%d", canM.msg.identifier, canM.msg.data_length_code, canM.msg.data[0]);
           xQueueSend(txCanQueue, &canM, portMAX_DELAY);
       }
       

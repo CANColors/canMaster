@@ -38,17 +38,18 @@ ISOStatus iso_send(uint8_t* data,  uint8_t len)
    
   tx_msg.identifier =  0x7E8;
 
-ESP_LOGI(TAG, "Iso send  = %d",  data[0]);  
+//ESP_LOGI(TAG, "Iso send  = %d",  data[0]);  
 
   if (len <= 7)
   {
+// ESP_LOGI(TAG, "Single Frame  = %d",  data[0]);  
     tx_msg.data_length_code = len+1;
     tx_msg.flags = CAN_MSG_FLAG_NONE;
     tx_msg.data[0]=len;
     for (int i=0; i<len;i++)
     {
       tx_msg.data[i+1]=data[i];
-      ESP_LOGI(TAG, "Data to send [%d] = %d", i+1, data[i]);  
+  //    ESP_LOGI(TAG, "Data to send [%d] = %d", i+1, data[i]);  
     }
     
     can_transmit(&tx_msg, portMAX_DELAY);  
@@ -72,7 +73,7 @@ ESP_LOGI(TAG, "Iso send  = %d",  data[0]);
        res = can_receive(&rx_msg, 1000); 
        if (res == ESP_OK)
         {
-        ESP_LOGI(TAG, "Received FCF:%d", rx_msg.data[0]);  
+    //    ESP_LOGI(TAG, "Received FCF:%d", rx_msg.data[0]);  
           if (rx_msg.data[0] == 0x30) 
           {
             blockSizeSend = rx_msg.data[1];
@@ -83,7 +84,7 @@ ESP_LOGI(TAG, "Iso send  = %d",  data[0]);
             have2Send = (len-6) / 7 + (((len-6)%7)?1:0);
           } else have2Send = blockSizeSend; 
           
-           ESP_LOGI(TAG, "len:%d, have2send:%d", len, have2Send);  
+     //      ESP_LOGI(TAG, "len:%d, have2send:%d", len, have2Send);  
           for (int j = 0; j<have2Send; j++)   //Block
           {
              tx_msg.data[0]=0x20+j;
@@ -92,7 +93,7 @@ ESP_LOGI(TAG, "Iso send  = %d",  data[0]);
                 tx_msg.data[k+1] = data[k+bytesSent];
              }
                 can_transmit(&tx_msg, portMAX_DELAY);
-                ESP_LOGI(TAG, "transmitted:%d",  tx_msg.data[0]); 
+     //           ESP_LOGI(TAG, "transmitted:%d",  tx_msg.data[0]); 
                 if (STMinSend != 0) vTaskDelay(STMinSend / portTICK_PERIOD_MS);
              bytesSent+=7;
           
@@ -106,7 +107,7 @@ ESP_LOGI(TAG, "Iso send  = %d",  data[0]);
         }
      }
   }
-
+     // ESP_LOGI(TAG, "isoStatus = %d",  isoStatus);  
  return isoStatus;
 
 }

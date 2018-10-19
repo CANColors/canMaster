@@ -56,6 +56,7 @@ void OBDInit(void)
     S01_P00.response[4] = 0xFF;
     S01_P00.response[5] = 0xFF;
     S01_P00.response[6] = 0x00;
+    S01_P00.requestState = OBD_REQUEST_NONE;
     
     S01_P20.service = 01;
     S01_P20.pid = 0x20;
@@ -68,6 +69,7 @@ void OBDInit(void)
     S01_P20.response[4] = 0xFF;
     S01_P20.response[5] = 0xFF; 
     S01_P20.response[6] = 0x00;
+    S01_P20.requestState = OBD_REQUEST_NONE;
     
     S01_P40.service = 01;
     S01_P40.pid = 0x40;
@@ -80,6 +82,7 @@ void OBDInit(void)
     S01_P40.response[4]= 0xFF;
     S01_P40.response[5]= 0xFF;
     S01_P40.response[6]= 0x00;
+    S01_P40.requestState = OBD_REQUEST_NONE;
       
     S01_P60.service = 01;
     S01_P60.pid = 0x60;
@@ -92,6 +95,7 @@ void OBDInit(void)
     S01_P60.response[4]= 0xFF;
     S01_P60.response[5]= 0xFF;
     S01_P60.response[6]= 0x00;
+    S01_P60.requestState = OBD_REQUEST_NONE;
     
     S01_P0C.service = 01;
     S01_P0C.pid = 0x0C;
@@ -104,6 +108,7 @@ void OBDInit(void)
     S01_P0C.response[4]= 0x00;
     S01_P0C.response[5]= 0x00;
     S01_P0C.response[6]= 0x00; 
+    S01_P0C.requestState = OBD_REQUEST_NONE;
     
     S09_P02.service = 01;
     S09_P02.pid = 0x0C;
@@ -143,6 +148,7 @@ void OBDInit(void)
     S09_P02.response[31]= 0x33;
     S09_P02.response[32]= 0x36;
     S09_P02.response[33]= 0x37;
+    S09_P02.requestState = OBD_REQUEST_NONE;
     
 }
 
@@ -322,7 +328,7 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
         }
         else  res = OBD_RESPONSE_NONE;
                      
-        iso_send(S01_P20.response, S01_P20.resLen);
+       isoStatus =  iso_send(S01_P20.response, S01_P20.resLen);
         if (isoStatus != ISOSTATUS_OK) res = OBS_RESPONSE_ERROR_NETWORK;
         break;
       }
@@ -334,7 +340,7 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
            res = OBD_RESPONSE_NEED_TO_SEND;
         }
         else  res = OBD_RESPONSE_NONE;
-        iso_send(S01_P40.response, S01_P40.resLen);
+       isoStatus =  iso_send(S01_P40.response, S01_P40.resLen);
         if (isoStatus != ISOSTATUS_OK) res = OBS_RESPONSE_ERROR_NETWORK;
         break;
       }
@@ -347,7 +353,7 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
         }
         else  res = OBD_RESPONSE_NONE;
                      
-        iso_send(S01_P60.response, S01_P60.resLen);
+       isoStatus =  iso_send(S01_P60.response, S01_P60.resLen);
         if (isoStatus != ISOSTATUS_OK) res = OBS_RESPONSE_ERROR_NETWORK;
         break;
       }
@@ -360,7 +366,8 @@ OBDResponseStatus res = OBD_RESPONSE_NONE;
         }
         else  res = OBD_RESPONSE_NONE;
                      
-       iso_send(S01_P0C.response, S01_P0C.resLen);
+      isoStatus =  iso_send(S01_P0C.response, S01_P0C.resLen);
+              
        if (isoStatus != ISOSTATUS_OK) res = OBS_RESPONSE_ERROR_NETWORK;
         break;
       }
